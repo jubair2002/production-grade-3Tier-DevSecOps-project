@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: product-app
+
+resources:
+  - namespace.yaml
+  - db/secret.yaml
+  - db/configmap.yaml
+  - db/pvc.yaml
+  - db/deployment.yaml
+  - db/service.yaml
+  - backend/deployment.yaml
+  - backend/service.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
