@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: jubair2002/productappfrontend:latest
-          imagePullPolicy: Always
+          image: jubair2002/productfrontend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               name: http

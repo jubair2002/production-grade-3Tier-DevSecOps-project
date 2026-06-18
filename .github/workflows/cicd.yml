@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 env:
-  AWS_REGION: ap-south-1
+  AWS_REGION: us-east-1
   EKS_CLUSTER_NAME: jubair-eks-cluster-testing
   BACKEND_IMAGE: jubair2002/productbackend
   FRONTEND_IMAGE: jubair2002/productfrontend
