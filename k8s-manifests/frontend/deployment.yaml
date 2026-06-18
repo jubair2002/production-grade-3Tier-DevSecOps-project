@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: jubair2002/productfrontend:9cd8f5a1f6e04fd30a581226277de02d06d3adea
+          image: jubair2002/productfrontend:2011c4f569256cdd08de19dfae350c3d1f1c8e7f
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
