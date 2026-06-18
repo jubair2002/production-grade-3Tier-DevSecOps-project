@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 
 function requiredEnv(name) {
   if (!process.env[name]) {
-    throw new Error(`${name} is required. Set it in Backend/.env locally or in the ECS task definition.`);
+    throw new Error(`${name} is required. Set it in Backend/.env locally or in the Kubernetes manifest (env / secret).`);
   }
   return process.env[name];
 }
