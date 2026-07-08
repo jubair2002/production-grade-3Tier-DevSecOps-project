@@ -20,6 +20,7 @@ A complete **3-tier Product Catalog** application shipped the DevSecOps way — 
 ## Table of Contents
 
 - [What This Project Demonstrates](#what-this-project-demonstrates)
+- [Documentation](#documentation)
 - [Live Screenshots](#live-screenshots)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -42,6 +43,19 @@ This is a **full DevSecOps project**, not just an app deployment. It wires toget
 - **GitOps delivery** — **ArgoCD** is the single source of truth. The pipeline never runs `kubectl apply`; it only updates manifests in Git, and ArgoCD reconciles the cluster.
 - **Cloud-native runtime** — runs on a real **Amazon EKS** cluster (`jubair-eks-cluster-testing`, region `us-east-1`).
 - **3-tier separation** — independent Frontend, Backend, and MySQL database tiers.
+
+---
+
+## Documentation
+
+Detailed guides for client briefings and team handover:
+
+| Document | Description |
+|----------|-------------|
+| [EKS Cluster Setup Guide](docs/EKS-CLUSTER-SETUP.md) | Connect laptop to EKS, install add-ons (EBS CSI, ArgoCD), verify deployment |
+| [ALB Ingress Setup Guide](docs/ALB-INGRESS-SETUP.md) | Provision internet-facing ALB from Ingress (subnet tags, Load Balancer Controller, IRSA) |
+| [Monitoring Setup Guide](docs/MONITORING-SETUP.md) | metrics-server, CloudWatch Observability, IAM permissions, dashboards |
+| [CI/CD Pipeline Guide](docs/CICD-PIPELINE.md) | Full DevSecOps pipeline walkthrough — stages, secrets, GitOps flow, rollback |
 
 ---
 
