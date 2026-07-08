@@ -42,6 +42,8 @@ This is a **full DevSecOps project**, not just an app deployment. It wires toget
 - **Automated CI/CD** — a single GitHub Actions pipeline handles scan → test → build → push → release.
 - **GitOps delivery** — **ArgoCD** is the single source of truth. The pipeline never runs `kubectl apply`; it only updates manifests in Git, and ArgoCD reconciles the cluster.
 - **Cloud-native runtime** — runs on a real **Amazon EKS** cluster (`jubair-eks-cluster-testing`, region `us-east-1`).
+- **Public ingress** — internet-facing **ALB** provisioned from Kubernetes Ingress via the [AWS Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html).
+- **Optional observability** — **Prometheus + Grafana** stack for dashboards and alerting (see [Grafana Monitoring Guide](docs/GRAFANA-MONITORING.md)).
 - **3-tier separation** — independent Frontend, Backend, and MySQL database tiers.
 
 ---
@@ -53,8 +55,8 @@ Detailed guides for client briefings and team handover:
 | Document | Description |
 |----------|-------------|
 | [EKS Cluster Setup Guide](docs/EKS-CLUSTER-SETUP.md) | Connect laptop to EKS, install add-ons (EBS CSI, ArgoCD), verify deployment |
-| [ALB Ingress Setup Guide](docs/ALB-INGRESS-SETUP.md) | Provision internet-facing ALB from Ingress (subnet tags, Load Balancer Controller, IRSA) |
-| [Monitoring Setup Guide](docs/MONITORING-SETUP.md) | metrics-server, CloudWatch Observability, IAM permissions, dashboards |
+| [ALB Ingress Setup Guide](docs/ALB-INGRESS-SETUP.md) | Install AWS Load Balancer Controller (Helm + IRSA), tag subnets, expose the app via ALB |
+| [Grafana Monitoring Guide](docs/GRAFANA-MONITORING.md) | Optional Prometheus + Grafana install, dashboards, and port-forward access |
 | [CI/CD Pipeline Guide](docs/CICD-PIPELINE.md) | Full DevSecOps pipeline walkthrough — stages, secrets, GitOps flow, rollback |
 
 ---
@@ -112,7 +114,9 @@ flowchart LR
 | **IaC / Config Scanning** | Checkov (Kubernetes + Dockerfile) |
 | **Vulnerability Scanning** | Trivy (filesystem + image) |
 | **Orchestration** | Kubernetes — **Amazon EKS** |
+| **Ingress / Load balancing** | AWS Application Load Balancer, [AWS Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html) |
 | **GitOps / CD** | **ArgoCD** |
+| **Monitoring (optional)** | Prometheus, Grafana (`kube-prometheus-stack`) |
 | **Cloud** | AWS (`us-east-1`) |
 
 ---
@@ -124,10 +128,10 @@ A **Product Catalog** with a clean 3-tier separation.
 ### Request flow
 
 ```
-Browser → Frontend (NodePort 30080) → /api proxy → Backend (5000) → MySQL (3306)
+Browser → ALB Ingress (HTTP 80) → Frontend (ClusterIP :3000) → /api proxy → Backend (:5000) → MySQL (:3306)
 ```
 
-The frontend serves the UI and proxies all `/api/*` calls to the backend service inside the cluster, so the browser only ever talks to the frontend.
+The frontend serves the UI and proxies all `/api/*` calls to the backend service inside the cluster. Only the frontend is exposed publicly through the ALB; backend and MySQL stay internal.
 
 ---
 
@@ -194,10 +198,16 @@ syncPolicy:
 
 ## Setup Guide
 
+Follow the guides in order for a full EKS deployment:
+
+1. [EKS Cluster Setup](docs/EKS-CLUSTER-SETUP.md) — connect `kubectl`, install EBS CSI and ArgoCD
+2. [ALB Ingress Setup](docs/ALB-INGRESS-SETUP.md) — install Load Balancer Controller and expose the app
+3. [Grafana Monitoring](docs/GRAFANA-MONITORING.md) — optional Prometheus + Grafana stack
+
 ### 1. Prerequisites
 
 - AWS account + an EKS cluster (`jubair-eks-cluster-testing` in `us-east-1`)
-- `kubectl`, `aws` CLI, and `docker` installed
+- `kubectl`, `aws` CLI, `helm`, and `docker` installed
 - Docker Hub account (`jubair2002`)
 
 ### 2. Run locally (optional)
@@ -244,16 +254,46 @@ kubectl apply -f k8s-manifests/argocd/application.yaml
 
 ArgoCD now watches `k8s-manifests/` on `main` and auto-deploys. From here, **every push to `main` flows automatically to EKS** via the pipeline + ArgoCD.
 
-### 6. Verify
+### 6. Install ALB Ingress (one-time)
+
+Follow [ALB Ingress Setup Guide](docs/ALB-INGRESS-SETUP.md) to install the AWS Load Balancer Controller and apply `k8s-manifests/ingress/ingress.yaml`.
+
+### 7. Verify
 
 ```bash
 kubectl get all -n product-app
-# open http://<NODE_EXTERNAL_IP>:30080
+kubectl get ingress product-frontend-ingress -n product-app
+
+# ALB hostname (wait 2–5 min after first apply)
+kubectl get ingress product-frontend-ingress -n product-app \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}'
 ```
+
+Open `http://<ALB-DNS-NAME>` in your browser, or test health:
+
+```bash
+curl -I http://<ALB-DNS-NAME>/health
+```
+
+### 8. Grafana monitoring 
+
+See [Grafana Monitoring Guide](docs/GRAFANA-MONITORING.md) to install `kube-prometheus-stack` and access dashboards locally via port-forward.
 
 ---
 
 ## Troubleshooting
+
+<details>
+<summary><strong>Ingress has no ALB address / app unreachable</strong></summary>
+
+**Cause:** Load Balancer Controller not installed, public subnets not tagged, or IRSA/OIDC not configured.
+
+**Fix:** Follow [ALB Ingress Setup Guide](docs/ALB-INGRESS-SETUP.md), then check controller logs:
+```bash
+kubectl describe ingress product-frontend-ingress -n product-app
+kubectl logs -n kube-system deployment/aws-load-balancer-controller --tail=50
+```
+</details>
 
 <details>
 <summary><strong>MySQL pod stuck in <code>Pending</code></strong></summary>

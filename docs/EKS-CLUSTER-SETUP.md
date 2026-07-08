@@ -441,4 +441,4 @@ Ask cluster admin to add your IAM user/role to EKS access entries.
 - [Main Project README](../README.md)
 - [CI/CD Pipeline Guide](./CICD-PIPELINE.md)
 - [ALB Ingress Setup Guide](./ALB-INGRESS-SETUP.md)
-- [Monitoring Setup Guide](./MONITORING-SETUP.md)
+- [Grafana Monitoring Guide](./GRAFANA-MONITORING.md)

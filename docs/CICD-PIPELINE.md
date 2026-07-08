@@ -434,4 +434,4 @@ git push origin main
 - [Main Project README](../README.md)
 - [EKS Cluster Setup Guide](./EKS-CLUSTER-SETUP.md)
 - [ALB Ingress Setup Guide](./ALB-INGRESS-SETUP.md)
-- [Monitoring Setup Guide](./MONITORING-SETUP.md)
+- [Grafana Monitoring Guide](./GRAFANA-MONITORING.md)
